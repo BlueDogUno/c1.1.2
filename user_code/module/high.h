@@ -207,6 +207,8 @@ public:
 
     void sucker_contorl_send();
 
+    bool_t temp_flag;
+
 };
 
 

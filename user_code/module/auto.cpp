@@ -59,6 +59,7 @@ extern High high;
 void AUTO::init()
 {
     auto_mode = HIGH_INIT;
+    high.auto_control(&auto_mode);
     last_auto_mode = auto_mode;
     auto_RC = remote_control.get_remote_control_point();
     last_auto_RC = remote_control.get_last_remote_control_point();
@@ -93,7 +94,7 @@ void AUTO::motor_status_measure()
 void AUTO::auto_control_set()
 {
     last_auto_mode = auto_mode;
-    if (if_key_singal_pessed(auto_RC , last_auto_RC, KEY_PRESSED_INIT_STATE))
+    if (if_key_pessed(auto_RC, KEY_PRESSED_INIT_STATE))
     {
         auto_mode = HIGH_INIT;
         // if (status_flag[MINE_SPIN] != READY || status_flag[MINE_YAW] != READY || status_flag[MINE_SUCTION] != READY)
@@ -104,7 +105,7 @@ void AUTO::auto_control_set()
         // else if (status_flag[LIFT] != READY)
             // 发送抬升等级
     }
-    else if (if_key_singal_pessed(auto_RC , last_auto_RC , KEY_PRESSED_STANDARD_STATE))
+    else if (if_key_pessed(auto_RC, KEY_PRESSED_STANDARD_STATE))
     {
         auto_mode = HIGH_STANDARD;
         // if (status_flag[MINE_SPIN] != READY || status_flag[MINE_YAW] != READY || status_flag[MINE_SUCTION] != READY)
@@ -114,7 +115,7 @@ void AUTO::auto_control_set()
         // else if (status_flag[LIFT] != READY)
             // 发送抬升等级
     }
-    else if (if_key_singal_pessed(auto_RC , last_auto_RC , KEY_PRESSED_SKY_STATE))
+    else if (if_key_pessed(auto_RC, KEY_PRESSED_SKY_STATE))
     {
         auto_mode = HIGH_SKY;
         // if (status_flag[MINE_SPIN] != READY || status_flag[MINE_YAW] != READY || status_flag[MINE_SUCTION] != READY)
@@ -124,5 +125,4 @@ void AUTO::auto_control_set()
         // else if (status_flag[LIFT] != READY)
             // 发送抬升等级
     }
-
 }

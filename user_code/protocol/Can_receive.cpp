@@ -6,6 +6,8 @@
 #include "bsp_can.h"
 #include "can.h"
 
+#include "high.h"
+
 #include "struct_typedef.h"
 
 extern CAN_HandleTypeDef hcan1;
@@ -143,6 +145,7 @@ void Can_receive::receive_ss_board_com(uint8_t data[8])
     chassis_receive.s0 = data[0];
     chassis_receive.s1 = data[1];
     chassis_receive.ch_1 = (int16_t)(data[2] << 8 | data[3]);
+    high.temp_flag = data[4];
 }
 
 void Can_receive::receive_ui_board_com(uint8_t data[8])

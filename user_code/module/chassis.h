@@ -174,9 +174,6 @@ typedef enum
     CHASSIS_NO_FOLLOW_YAW,               //底盘移动速度和旋转速度均由遥控器决定,应用于只需要底盘控制的场合
 
     CHASSIS_OPEN,                        //遥控器的通道值直接转化成电机电流值发送到can总线上
-
-    CHASSIS_ONLY_LR,
-
                                          
 } chassis_behaviour_e;                   //行为模式
 

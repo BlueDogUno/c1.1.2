@@ -94,7 +94,7 @@ void High::init()
 void High::feedback_update(){
     //记录上一次遥控器值
     high_last_key_v = high_RC->key.v;
-
+    sucker_state = temp_flag;
     //更新电机数据
     for (uint8_t i = 0; i < 2; ++i)
     {
@@ -157,13 +157,22 @@ void High::behaviour_mode_set()
     }
 
     //键鼠控制
-    if (if_key_singal_pessed(high_RC , last_high_RC , KEY_PRESSED_SUCKER_STATE))
-    {
-        if (sucker_state == open)
-            sucker_state = close;
-        else    
-            sucker_state = open;
-    }
+    // if (if_key_singal_pessed(high_RC , last_high_RC , KEY_PRESSED_SUCKER_STATE))
+    // {
+    //     if (sucker_state == open)
+    //         sucker_state = close;
+    //     else    
+    //         sucker_state = open;
+    // }
+    //吸盘开关
+    // if(if_key_pessed(high_RC, '!') && if_key_pessed(high_RC, 'F'))//开气泵
+    // {
+    //     sucker_state = close;
+    // }
+    // else if (if_key_pessed(high_RC, '!') && if_key_pessed(high_RC, 'G'))
+    // {
+    //     sucker_state = open;
+    // }
 
 }
 

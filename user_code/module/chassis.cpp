@@ -142,13 +142,6 @@ void Chassis::feedback_update()
     y.speed = (-chassis_motive_motor[0].speed - chassis_motive_motor[1].speed + chassis_motive_motor[2].speed + chassis_motive_motor[3].speed) * MOTOR_SPEED_TO_CHASSIS_SPEED_VY;
     z.speed = (-chassis_motive_motor[0].speed - chassis_motive_motor[1].speed - chassis_motive_motor[2].speed - chassis_motive_motor[3].speed) * MOTOR_SPEED_TO_CHASSIS_SPEED_WZ / MOTOR_DISTANCE_TO_CENTER;
 
-    // TODO 还未完善
-    //底盘相对于云台的角度,由云台发送过来 编码器中的角度
-
-    // //计算底盘姿态角度, 如果底盘上有陀螺仪请更改这部分代码
-    // chassis_yaw = rad_format(*(chassis_INS_angle + INS_YAW_ADDRESS_OFFSET) - chassis_yaw_motor->relative_angle);
-    // chassis_pitch = rad_format(*(chassis_INS_angle + INS_PITCH_ADDRESS_OFFSET) - chassis_pitch_motor->relative_angle);
-    // chassis_roll = *(chassis_INS_angle + INS_ROLL_ADDRESS_OFFSET);
 }
 
 fp32 move_top_xyz_parm[3] = {1.0, 1.0, 1.3};
@@ -165,64 +158,7 @@ void Chassis::set_contorl()
     //获取三个控制设置值
     chassis_behaviour_control_set(&vx_set, &vy_set, &angle_set);
 
-    //跟随云台模式
-    if (chassis_mode == CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW)
-    {
-        fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
-        //旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
-        sin_yaw = sin(-chassis_relative_angle);
-        cos_yaw = cos(-chassis_relative_angle);
-
-        x.speed_set = cos_yaw * vx_set + sin_yaw * vy_set;
-        y.speed_set = -sin_yaw * vx_set + cos_yaw * vy_set;
-
-        //设置控制相对云台角度
-        chassis_relative_angle_set = rad_format(angle_set);
-
-        //计算旋转PID角速度 如果是小陀螺,固定转速 如果是45度角对敌,选择固定角度
-        if (top_switch == TRUE)
-        {
-            z.speed_set = angle_set;
-            // fp32 temp_x_speed_set = x.speed_set;
-            // fp32 temp_y_speed_set = y.speed_set;
-            // fp32 temp_z_speed_set = z.speed_set;
-            // x.speed_set = move_top_xyz_parm[0] * x.max_speed * (temp_x_speed_set / sqrtf(pow(temp_x_speed_set, 2) + pow(temp_y_speed_set, 2) + 6 * pow(temp_z_speed_set, 2)));
-            // y.speed_set = move_top_xyz_parm[1] * y.max_speed * (temp_y_speed_set / sqrtf(pow(temp_x_speed_set, 2) + pow(temp_y_speed_set, 2) + 6 * pow(temp_z_speed_set, 2)));
-            // z.speed_set = move_top_xyz_parm[2] * z.max_speed * (temp_z_speed_set * 2.5 / sqrtf(pow(temp_x_speed_set, 2) + pow(temp_y_speed_set, 2) + 6 * pow(temp_z_speed_set, 2)));
-        }
-        // else if (pisa_switch = TRUE)
-        // {
-        //     chassis_wz_angle_pid.data.ref = &chassis_relative_angle;
-        //     chassis_wz_angle_pid.data.set = &chassis_relative_angle_set;
-        // }
-        else
-        {
-            chassis_wz_angle_pid.data.ref = &chassis_relative_angle;
-            chassis_wz_angle_pid.data.set = &chassis_relative_angle_set;
-            z.speed_set = -chassis_wz_angle_pid.pid_calc();
-        }
-
-        if (super_cap_switch == TRUE && top_switch == FALSE)
-        {
-            x.min_speed = -1.5 * NORMAL_MAX_CHASSIS_SPEED_X;
-            x.max_speed = 1.5 * NORMAL_MAX_CHASSIS_SPEED_X;
-            y.min_speed = -1.5 * NORMAL_MAX_CHASSIS_SPEED_Y;
-            y.max_speed = 1.5 * NORMAL_MAX_CHASSIS_SPEED_Y;
-        }
-        else
-        {
-            x.min_speed = -NORMAL_MAX_CHASSIS_SPEED_X;
-            x.max_speed = NORMAL_MAX_CHASSIS_SPEED_X;
-            y.min_speed = -NORMAL_MAX_CHASSIS_SPEED_Y;
-            y.max_speed = NORMAL_MAX_CHASSIS_SPEED_Y;
-        }
-
-        //速度限幅
-        x.speed_set = fp32_constrain(x.speed_set, x.min_speed, x.max_speed);
-        y.speed_set = fp32_constrain(y.speed_set, y.min_speed, y.max_speed);
-        z.speed_set = fp32_constrain(z.speed_set, z.min_speed, z.max_speed);
-    }
-    else if (chassis_mode == CHASSIS_VECTOR_NO_FOLLOW_YAW)
+    if (chassis_mode == CHASSIS_VECTOR_NO_FOLLOW_YAW)
     {
         //“angle_set” 是旋转速度控制
         z.speed_set = angle_set;
@@ -238,13 +174,6 @@ void Chassis::set_contorl()
         z.speed_set = angle_set;
         chassis_cmd_slow_set_vx.out = 0.0f;
         chassis_cmd_slow_set_vy.out = 0.0f;
-    }    else if (chassis_behaviour_mode == CHASSIS_ONLY_LR)
-    {
-        //“angle_set” 是旋转速度控制
-        z.speed_set = angle_set;
-        //速度限幅
-        x.speed_set = fp32_constrain(vx_set, x.min_speed, x.max_speed);
-        y.speed_set = 0;
     }
 }
 
@@ -472,7 +401,7 @@ void Chassis::chassis_behaviour_mode_set()
     {
         chassis_behaviour_mode = CHASSIS_NO_FOLLOW_YAW;
     }
-    else if (switch_is_mid(chassis_RC->rc.s[CHASSIS_MODE_CHANNEL])) //左拨杆下  
+    if (switch_is_mid(chassis_RC->rc.s[0])) //左拨杆下  底盘无力状态
     {
         chassis_behaviour_mode = CHASSIS_ZERO_FORCE;
     }
@@ -488,7 +417,7 @@ void Chassis::chassis_behaviour_mode_set()
     {
         chassis_mode = CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW;
     }
-    else if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW || chassis_behaviour_mode == CHASSIS_ONLY_LR) //底盘控制 闭环 自主运动
+    else if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW) //底盘控制 闭环 自主运动
     {
         chassis_mode = CHASSIS_VECTOR_NO_FOLLOW_YAW;
     }
@@ -514,11 +443,7 @@ void Chassis::chassis_behaviour_control_set(fp32 *vx_set, fp32 *vy_set, fp32 *an
     {
         chassis_zero_force_control(vx_set, vy_set, angle_set);
     }
-    else if (chassis_behaviour_mode == CHASSIS_INFANTRY_FOLLOW_GIMBAL_YAW)
-    {
-        chassis_infantry_follow_gimbal_yaw_control(vx_set, vy_set, angle_set);
-    }
-    else if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW || chassis_behaviour_mode == CHASSIS_ONLY_LR)
+    else if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW )
     {
         chassis_no_follow_yaw_control(vx_set, vy_set, angle_set);
     }
@@ -678,11 +603,8 @@ void Chassis::chassis_no_follow_yaw_control(fp32 *vx_set, fp32 *vy_set, fp32 *wz
     }
 
     chassis_rc_to_control_vector(vx_set, vy_set);
-    // if(switch_is_mid(chassis_RC->rc.s[CHASSIS_MODE_CHANNEL]) || switch_is_up(chassis_RC->rc.s[CHASSIS_MODE_CHANNEL])){
-        *wz_set = chassis_RC->mouse.x * CHASSIS_WZ_RC_SEN;
-    // }else {
-        *wz_set = -CHASSIS_WZ_RC_SEN * chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL];
-    // }
+       
+    *wz_set = -CHASSIS_WZ_RC_SEN * chassis_RC->rc.ch[CHASSIS_WZ_CHANNEL]-chassis_RC->mouse.x * CHASSIS_WZ_RC_SEN;
     
     
 
@@ -730,48 +652,45 @@ void Chassis::chassis_rc_to_control_vector(fp32 *vx_set, fp32 *vy_set)
     rc_deadband_limit(chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, CHASSIS_RC_DEADLINE);
 
     vx_set_channel = vx_channel * CHASSIS_VX_RC_SEN;
-    if (chassis_behaviour_mode == CHASSIS_NO_FOLLOW_YAW){
-        vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
-    
-    }
+    vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
     
 
     //键盘控制
     if (KEY_CHASSIS_FRONT)
     {
-        vx_set_channel = x.max_speed;
+        vx_set_channel = 0.5f;
     }
     else if (KEY_CHASSIS_BACK)
     {
-        vx_set_channel = x.min_speed;
+        vx_set_channel = -0.5f;
     }
 
     if (KEY_CHASSIS_LEFT)
     {
-        vy_set_channel = y.max_speed;
+        vy_set_channel = 0.5f;
     }
     else if (KEY_CHASSIS_RIGHT)
     {
-        vy_set_channel = y.min_speed;
+        vy_set_channel = -0.5f;
     }
 
-    //一阶低通滤波代替斜波作为底盘速度输入
-    chassis_cmd_slow_set_vx.first_order_filter_cali(vx_set_channel);
-    chassis_cmd_slow_set_vy.first_order_filter_cali(vy_set_channel);
+    // //一阶低通滤波代替斜波作为底盘速度输入
+    // chassis_cmd_slow_set_vx.first_order_filter_cali(vx_set_channel);
+    // chassis_cmd_slow_set_vy.first_order_filter_cali(vy_set_channel);
 
-    //停止信号，不需要缓慢加速，直接减速到零
-    if (vx_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN && vx_set_channel > -CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN)
-    {
-        chassis_cmd_slow_set_vx.out = 0.0f;
-    }
+    // //停止信号，不需要缓慢加速，直接减速到零
+    // if (vx_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN && vx_set_channel > -CHASSIS_RC_DEADLINE * CHASSIS_VX_RC_SEN)
+    // {
+    //     chassis_cmd_slow_set_vx.out = 0.0f;
+    // }
 
-    if (vy_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN && vy_set_channel > -CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN)
-    {
-        chassis_cmd_slow_set_vy.out = 0.0f;
-    }
+    // if (vy_set_channel < CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN && vy_set_channel > -CHASSIS_RC_DEADLINE * CHASSIS_VY_RC_SEN)
+    // {
+    //     chassis_cmd_slow_set_vy.out = 0.0f;
+    // }
 
-    *vx_set = chassis_cmd_slow_set_vx.out;
-    *vy_set = chassis_cmd_slow_set_vy.out;
+    *vx_set = vx_set_channel;
+    *vy_set = vy_set_channel;
 
 }
 

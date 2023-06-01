@@ -46,7 +46,7 @@ typedef enum
   CAN_RC_BOARM_COM_ID = 0x301,
   CAN_SS_BOARD_COM_ID = 0x302,
   CAN_SEND_LIFT_AUTO_COM_ID = 0x303,
-  CAN_UI_COM_ID = 0x305,
+  // CAN_UI_COM_ID = 0x305,
 
   //超级电容接收ID
   CAN_SUPER_CAP_ID = 0x211
@@ -94,6 +94,8 @@ typedef struct
   uint16_t v;
   uint8_t s0;
   uint8_t s1;
+
+  uint8_t z;
 
   // UI状态
   bool_t stretch_state;

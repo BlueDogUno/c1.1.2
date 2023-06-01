@@ -75,6 +75,7 @@ void Communicate::run()
     remote_control.rc_ctrl.key.v = can_receive.chassis_receive.v;
     remote_control.rc_ctrl.rc.s[1] = can_receive.chassis_receive.s1;
     remote_control.rc_ctrl.rc.s[0] = can_receive.chassis_receive.s0;
+    // remote_control.rc_ctrl.mouse.z = can_receive.chassis_receive.z;
 #else
     ;
 #endif
@@ -148,9 +149,9 @@ extern "C"
                 can_receive.receive_ss_board_com(rx_data);
                 // detect_hook(BOARD_COM);
                 break;
-            case CAN_UI_COM_ID:
-                can_receive.receive_ui_board_com(rx_data);
-                break;
+            // case CAN_UI_COM_ID:
+            //     can_receive.receive_ui_board_com(rx_data);
+            //     break;
             default:
             {
                 break;

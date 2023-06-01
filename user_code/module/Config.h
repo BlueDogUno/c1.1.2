@@ -3,7 +3,7 @@
 
 /*----------------------底盘---------------------------*/
 //底盘动力电机无电流输出
-#define CHASSIS_MOTIVE_MOTOR_NO_CURRENT 1
+#define CHASSIS_MOTIVE_MOTOR_NO_CURRENT 0
 
 
 /*---------------------通信-----------------------------*/
